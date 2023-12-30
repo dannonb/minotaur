@@ -1,0 +1,51 @@
+version: "3.9"
+services: 
+  redis: 
+    image: redis:6.2.6  
+    hostname: redis_cache
+    restart: "no"
+    ports:
+      - 6379:6379
+  db:
+    image: mongo:4.4-rc-focal
+    container_name: mongo-container
+    restart: always
+    volumes: 
+      - ~/mongo-volume:/data/db
+    ports:
+      - '27017:27017'  
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password  
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+  app: 
+    build: 
+      dockerfile: Dockerfile
+      context: .
+    ports: 
+      - 8080:8080
+    restart: on-failure
+    depends_on:
+      - redis
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    environment: 
+      MONGOURI: mongodb://db:27017   
+      DB_NAME: database   
+      PORT: 8080   
+volumes: 
+  mongo-volume:        
